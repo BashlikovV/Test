@@ -77,7 +77,14 @@ class HomeScreenViewModel(
     )
 
     fun updateLocation(location: LocationState) = launchIO(
-        safeAction = {  },
+        safeAction = {
+            updateLocationUseCase.execute(location.idx + 1) {
+                it.copy(
+                    locationName = location.locationName,
+                    images = location.images.map { img -> Image(img.imageUri) }
+                )
+            }
+        },
         onError = { throwable -> processThrowable(throwable) }
     )
 
@@ -89,10 +96,6 @@ class HomeScreenViewModel(
     fun unselectImage(location: Int, image: Int) {
         localChanges.unselectImage(location, image)
         localChangesFlow.update { OnChange(localChanges, random.nextInt()) }
-    }
-
-    fun setCurrentLocation(location: Int) {
-        localChanges.currentLocation = location
     }
 
     fun addImage(uri: Uri) = launchIO(
