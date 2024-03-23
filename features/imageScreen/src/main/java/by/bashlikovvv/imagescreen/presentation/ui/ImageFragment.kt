@@ -1,5 +1,6 @@
 package by.bashlikovvv.imagescreen.presentation.ui
 
+import android.app.AlertDialog
 import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
@@ -22,13 +23,23 @@ class ImageFragment : Fragment() {
     ): View {
         val layout = inflater.inflate(R.layout.fragment_image, container, false)
 
+        loadImage(layout)
+        showAlertDialog()
+
+        return layout
+    }
+
+    private fun loadImage(layout: View) {
         Glide.with(layout)
             .asDrawable()
             .load(imageUri)
             .into(layout as ImageView)
+    }
 
-
-        return layout
+    private fun showAlertDialog() {
+        AlertDialog.Builder(requireContext())
+            .setTitle(R.string.full_screen_mode)
+            .show()
     }
 
 }
