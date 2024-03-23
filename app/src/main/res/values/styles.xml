@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <style name="homeFlowFragmentContainerStyle">
+        <item name="android:layout_marginBottom">60dp</item>
+        <item name="android:background">@color/main_background</item>
+    </style>
+
+    <style name="homeFlowBottomBarStyle">
+        <item name="android:layout_gravity">bottom</item>
+        <item name="android:backgroundTint">@color/flow_navigation_bar_background</item>
+        <item name="removeEmbeddedFabElevation">true</item>
+        <item name="fabAnchorMode">cradle</item>
+        <item name="fabAlignmentMode">center</item>
+        <item name="fabCradleMargin">-50dp</item>
+        <item name="fabCradleRoundedCornerRadius">0dp</item>
+        <item name="fabCradleVerticalOffset">0dp</item>
+    </style>
+
+    <style name="homeFlowBottomNavigationViewStyle">
+        <item name="android:layout_gravity">bottom</item>
+        <item name="itemIconSize">30dp</item>
+        <item name="elevation">0dp</item>
+        <item name="android:padding">0dp</item>
+        <item name="android:layout_margin">0dp</item>
+        <item name="labelVisibilityMode">unlabeled</item>
+        <item name="android:background">@color/transparent</item>
+        <item name="menu">@menu/flow_bottom_navigation_menu</item>
+        <item name="itemActiveIndicatorStyle">@null</item>
+        <item name="itemIconTint">@color/flow_bottom_navigation_icon_tint</item>
+    </style>
+
+    <style name="homeFlowClockFloatingActionButton">
+        <item name="fabCustomSize">90dp</item>
+        <item name="android:elevation">0dp</item>
+        <item name="elevation">0dp</item>
+        <item name="android:padding">0dp</item>
+        <item name="backgroundTint">@color/transparent</item>
+        <item name="android:backgroundTint">@color/transparent</item>
+        <item name="android:layout_margin">0dp</item>
+        <item name="android:clickable">true</item>
+        <item name="android:foreground">?attr/selectableItemBackground</item>
+        <item name="android:background">@drawable/clock_floating_button_background</item>
+        <item name="background">@drawable/clock_floating_button_background</item>
+    </style>
+</resources>

@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="utf-8"?>
+<navigation xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:id="@+id/home_navigation"
+    app:startDestination="@id/locationsFragment">
+
+    <fragment
+        android:id="@+id/locationsFragment"
+        android:name="by.bashlikovvv.homescreen.presentation.ui.LocationsFragment"
+        android:label="LocationsFragment" />
+
+    <fragment
+        android:id="@+id/settingsFragment"
+        android:name="by.bashlikovvv.homescreen.presentation.ui.SettingsFragment"
+        android:label="SettingsFragment" />
+    <fragment
+        android:id="@+id/incomeFragment"
+        android:name="by.bashlikovvv.homescreen.presentation.ui.IncomeFragment"
+        android:label="IncomeFragment" />
+    <fragment
+        android:id="@+id/moodboardFragment"
+        android:name="by.bashlikovvv.homescreen.presentation.ui.MoodBoardFragment"
+        android:label="MoodboardFragment" />
+
+</navigation>

@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <color name="flow_navigation_bar_background">#FFF2F4F8</color>
+
+    <color name="flow_navigation_bar_icon_inactive">#FFCFD2CC</color>
+    <color name="flow_navigation_bar_icon_active">#FF212020</color>
+
+    <color name="location_text_input_layout_background">#FFEDF3F4</color>
+    <color name="locations_list_item_text_color">#FF869495</color>
+
+    <color name="remove_button_color">#FFCE6666</color>
+</resources>

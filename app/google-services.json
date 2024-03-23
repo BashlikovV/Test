@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "710688964314",
+    "project_id": "test-5f600",
+    "storage_bucket": "test-5f600.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:710688964314:android:d59b2800e1ae97d10a6fe3",
+        "android_client_info": {
+          "package_name": "by.bashlikovvv.test"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCFjJPqQCUbHUSNrY-KRgW6KrvkG9VbRs4"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

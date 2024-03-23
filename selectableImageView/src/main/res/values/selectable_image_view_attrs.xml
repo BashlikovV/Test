@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <declare-styleable name="SelectableImageView">
+        <attr name="siv_src" format="reference"/>
+        <attr name="siv_indicator_src" format="reference"/>
+        <attr name="siv_indicator_selected_src" format="reference"/>
+        <attr name="siv_image_size" format="dimension"/>
+        <attr name="siv_indicator_size" format="dimension"/>
+    </declare-styleable>
+</resources>
