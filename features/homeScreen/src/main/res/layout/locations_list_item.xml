@@ -38,6 +38,7 @@
                     app:layout_constraintTop_toTopOf="@id/locationTextInputLayout"
                     app:layout_constraintBottom_toBottomOf="@id/locationTextInputLayout"
                     android:src="@drawable/add_location"
+                    android:contentDescription="@string/add_location"
                     style="@style/addLocationImageViewStyle" />
 
                 <com.google.android.material.textfield.TextInputLayout

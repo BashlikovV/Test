@@ -23,10 +23,13 @@
         <item name="android:padding">0dp</item>
         <item name="android:layout_margin">0dp</item>
         <item name="labelVisibilityMode">unlabeled</item>
+        <item name="android:gravity">bottom</item>
         <item name="android:background">@color/transparent</item>
         <item name="menu">@menu/flow_bottom_navigation_menu</item>
         <item name="itemActiveIndicatorStyle">@null</item>
         <item name="itemIconTint">@color/flow_bottom_navigation_icon_tint</item>
+        <item name="itemPaddingTop">0dp</item>
+        <item name="itemPaddingBottom">0dp</item>
     </style>
 
     <style name="homeFlowClockFloatingActionButton">
@@ -38,7 +41,6 @@
         <item name="android:backgroundTint">@color/transparent</item>
         <item name="android:layout_margin">0dp</item>
         <item name="android:clickable">true</item>
-        <item name="android:foreground">?attr/selectableItemBackground</item>
         <item name="android:background">@drawable/clock_floating_button_background</item>
         <item name="background">@drawable/clock_floating_button_background</item>
     </style>

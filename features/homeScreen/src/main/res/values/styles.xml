@@ -82,7 +82,6 @@
     </style>
 
     <style name="addLocationImageViewStyle">
-        <item name="android:contentDescription">@string/add_location</item>
         <item name="android:foreground">@drawable/white_ripple</item>
     </style>
 
