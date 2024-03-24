@@ -1,9 +1,12 @@
 package by.bashlikovvv.homescreen.presentation.viewmodel
 
 import android.net.Uri
+import androidx.lifecycle.LiveData
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import by.bashlikovvv.core.base.BaseViewModel
+import by.bashlikovvv.core.base.SingleLiveEvent
+import by.bashlikovvv.core.domain.model.CustomThrowable
 import by.bashlikovvv.core.domain.model.Image
 import by.bashlikovvv.core.domain.model.Location
 import by.bashlikovvv.core.domain.model.ParsedException
@@ -12,20 +15,20 @@ import by.bashlikovvv.core.domain.usecase.GetStringUseCase
 import by.bashlikovvv.core.domain.usecase.UpdateLocationUseCase
 import by.bashlikovvv.core.domain.usecase.UploadImageUseCase
 import by.bashlikovvv.core.ext.toParsedException
+import by.bashlikovvv.homescreen.R
 import by.bashlikovvv.homescreen.domain.contract.LocalChanges
 import by.bashlikovvv.homescreen.domain.model.ImageState
 import by.bashlikovvv.homescreen.domain.model.LocationState
 import kotlinx.coroutines.CoroutineExceptionHandler
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.channels.BufferOverflow
+import kotlinx.coroutines.asCoroutineDispatcher
 import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import java.util.concurrent.Executors
 import java.util.concurrent.ThreadLocalRandom
 import javax.inject.Inject
 import javax.inject.Provider
@@ -41,12 +44,10 @@ class HomeScreenViewModel(
         processThrowable(throwable)
     }
 
-    private val _exceptionsFlow = MutableSharedFlow<ParsedException>(
-        replay = 1,
-        extraBufferCapacity = 1,
-        onBufferOverflow = BufferOverflow.DROP_OLDEST
-    )
-    val exceptionsFlow = _exceptionsFlow.asSharedFlow()
+    private val imageProcessingDispatcher = Executors.newSingleThreadExecutor().asCoroutineDispatcher()
+
+    private val _exceptionsFlow = SingleLiveEvent<ParsedException>()
+    val exceptionsFlow: LiveData<ParsedException> = _exceptionsFlow
 
     private val _locationsFlow = MutableStateFlow<List<LocationState>>(listOf())
 
@@ -56,6 +57,12 @@ class HomeScreenViewModel(
     private val random = ThreadLocalRandom.current()
     private val localChanges = LocalChanges()
     private val localChangesFlow = MutableStateFlow(OnChange(localChanges, random.nextInt()))
+
+    private var _removeImageFlow = SingleLiveEvent<Pair<Int, Int?>>()
+    val removeImageFlow: LiveData<Pair<Int, Int?>> = _removeImageFlow
+
+    val currentLocation: Int
+        get() = localChanges.currentLocation
 
     init {
         loadLocations()
@@ -81,7 +88,9 @@ class HomeScreenViewModel(
             updateLocationUseCase.execute(location.idx + 1) {
                 it.copy(
                     locationName = location.locationName,
-                    images = location.images.map { img -> Image(img.imageUri) }
+                    images = location.images
+                        .filter { img -> img.imageUri.isNotEmpty() }
+                        .map { img -> Image(img.imageUri) }
                 )
             }
         },
@@ -98,16 +107,23 @@ class HomeScreenViewModel(
         localChangesFlow.update { OnChange(localChanges, random.nextInt()) }
     }
 
-    fun addImage(uri: Uri) = launchIO(
+    fun addImage(uri: Uri) = launchCustom(
         safeAction = {
-            uploadImageUseCase.execute(uri)
-                .addOnCompleteListener {
-                    val image = Image(it.result.toString())
+            val task = uploadImageUseCase.execute(uri)
+            if (task == null) {
+                processImageNotLoaded()
+            } else {
+                task.addOnSuccessListener {
+                    val image = Image(it.toString())
 
-                    addImageRepository(localChanges.currentLocation, image)
+                    addImageRepository(localChanges.currentLocation, image).invokeOnCompletion {
+                        loadLocations()
+                    }
                 }
+            }
         },
-        onError = { processThrowable(it) }
+        onError = { processThrowable(it) },
+        dispatcher = imageProcessingDispatcher
     )
 
     fun containsSelected(): Boolean = localChanges.containsSelected()
@@ -117,35 +133,52 @@ class HomeScreenViewModel(
         localChangesFlow.update { OnChange(localChanges, random.nextInt()) }
     }
 
-    fun removeImages(location: Int) {
-        localChanges.removeImages(location)
-        localChangesFlow.update { OnChange(localChanges, random.nextInt()) }
+    fun removeImages(location: Int) = launchMain(
+        safeAction = {
+            val imagesToRemove = localChanges.getImagesToRemove(location)
+            localChanges.clearSelectedImages()
+            localChangesFlow.update { OnChange(localChanges, random.nextInt()) }
+            imagesToRemove.forEach { image ->
+                _removeImageFlow.postValue(location to image)
+                updateLocationUseCase.execute(location + 1) { dbLocation ->
+                    val images = dbLocation.images.filterIndexed { index, value -> index != image }
+                    dbLocation.copy(images = images)
+                }
+                localChanges.removeImageProgress(location, image)
+                localChangesFlow.update { OnChange(localChanges, random.nextInt()) }
+            }
+            loadLocations()
+        },
+        onError = { processThrowable(it) }
+    )
+
+    private fun processThrowable(throwable: Throwable) = launch(Dispatchers.Main) {
+        when (throwable) {
+            is CustomThrowable.ImageUploadingThrowable -> {
+                _exceptionsFlow.postValue(
+                    ParsedException(
+                        title = getStringUseCase.execute(R.string.image_uploading_error),
+                        message = getStringUseCase.execute(R.string.image_uploading_error_message)
+                    )
+                )
+            }
+            else -> {
+                _exceptionsFlow.postValue(
+                    throwable.toParsedException(::titleBuilder)
+                )
+            }
+        }
     }
 
-    private fun processThrowable(throwable: Throwable) {
-        launch(Dispatchers.Main) {
-            _exceptionsFlow.tryEmit(
-                throwable.toParsedException(::titleBuilder)
-            )
-        }
+    private fun processImageNotLoaded() {
+        processThrowable(CustomThrowable.ImageUploadingThrowable)
+        _removeImageFlow.postValue(localChanges.currentLocation to null)
     }
 
     private fun titleBuilder(throwable: Throwable): String {
         return throwable.localizedMessage ?: getStringUseCase
             .execute(by.bashlikovvv.core.R.string.smth_went_wrong)
     }
-
-    private fun removeImageRepository(location: Int, image: Int) = launchIO(
-        safeAction = {
-            updateLocationUseCase.execute(location + 1) { dbLocation ->
-                dbLocation.copy(images = dbLocation.images.filterIndexed { index, _ ->
-                    index != image
-                })
-            }
-            loadLocations()
-        },
-        onError = { throwable -> processThrowable(throwable) }
-    )
 
     private fun addImageRepository(location: Int, image: Image) = launchIO(
         safeAction = {
@@ -157,9 +190,12 @@ class HomeScreenViewModel(
 
                 dbLocation.copy(images = newImages)
             }
-            loadLocations()
         },
         onError = { throwable -> processThrowable(throwable) }
+    )
+
+    fun loadingImage(id: Int): ImageState = ImageState(
+        idx = id, imageUri = "", isInProgress = true, showSelected = false, isSelected = false
     )
 
     private fun merge(changes: OnChange<LocalChanges>, list: List<LocationState>): List<LocationState> {
@@ -169,16 +205,7 @@ class HomeScreenViewModel(
                 idx = locationIndex,
                 locationName = location.locationName,
                 images = location.images
-                    .filter {
-                        if (localChanges.isImageToRemove(locationIndex, it.idx)) {
-                            localChanges.setImageRemoved(locationIndex, it.idx)
-                            removeImageRepository(locationIndex, it.idx)
-
-                            false
-                        } else {
-                            true
-                        }
-                    }.mapIndexed { imageIndex, image ->
+                    .mapIndexed { imageIndex, image ->
                         image.copy(
                             idx = imageIndex,
                             imageUri = image.imageUri,
