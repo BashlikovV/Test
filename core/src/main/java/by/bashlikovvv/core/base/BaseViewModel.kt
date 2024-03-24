@@ -79,6 +79,23 @@ abstract class BaseViewModel : ViewModel(), CoroutineScope {
         }
     }
 
+    inline fun launchCustom(
+        crossinline safeAction: suspend () -> Unit,
+        crossinline onError: (Throwable) -> Unit,
+        dispatcher: CoroutineDispatcher,
+        errorDispatcher: CoroutineDispatcher = Dispatchers.Main
+    ): Job {
+        val exceptionHandler = CoroutineExceptionHandler { _, throwable ->
+            this.launch(errorDispatcher) {
+                onError.invoke(throwable)
+            }
+        }
+
+        return this.launch(exceptionHandler + dispatcher) {
+            safeAction.invoke()
+        }
+    }
+
     override fun onCleared() {
         coroutineContext.job.cancel()
         super.onCleared()
