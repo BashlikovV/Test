@@ -15,9 +15,7 @@
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintTop_toTopOf="parent"
-        android:elevation="5dp"
-        android:background="@drawable/location_list_item_background"
-        android:orientation="vertical">
+        style="@style/baseLinearLayoutStyle">
 
         <LinearLayout
             android:id="@+id/ll"
@@ -35,23 +33,22 @@
                     android:id="@+id/addLocationImageView"
                     android:layout_width="30dp"
                     android:layout_height="30dp"
-                    android:src="@drawable/add_location"
-                    android:contentDescription="@string/add_location"
                     app:layout_constraintEnd_toEndOf="parent"
                     android:layout_marginEnd="12dp"
                     app:layout_constraintTop_toTopOf="@id/locationTextInputLayout"
                     app:layout_constraintBottom_toBottomOf="@id/locationTextInputLayout"
-                    android:foreground="@drawable/white_ripple" />
+                    android:src="@drawable/add_location"
+                    style="@style/addLocationImageViewStyle" />
 
                 <com.google.android.material.textfield.TextInputLayout
                     android:id="@+id/locationTextInputLayout"
                     android:layout_width="0dp"
                     android:layout_height="wrap_content"
-                    style="@style/locationsListItemTextInputLayoutStyle"
                     app:layout_constraintStart_toStartOf="parent"
                     app:layout_constraintEnd_toStartOf="@id/addLocationImageView"
                     app:layout_constraintTop_toTopOf="parent"
-                    android:layout_marginTop="16dp">
+                    android:layout_marginTop="16dp"
+                    style="@style/locationsListItemTextInputLayoutStyle">
 
                     <com.google.android.material.textfield.TextInputEditText
                         android:id="@+id/locationTextInputEditText"
@@ -66,6 +63,7 @@
             </androidx.constraintlayout.widget.ConstraintLayout>
 
             <LinearLayout
+                android:id="@+id/imagesRecyclerViewLayout"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:orientation="vertical"
@@ -91,22 +89,12 @@
         android:id="@+id/removeButton"
         android:layout_width="222dp"
         android:layout_height="60dp"
-        android:gravity="center"
-        android:layout_gravity="center"
-        android:layout_marginHorizontal="65dp"
-        android:clickable="true"
-        android:background="@drawable/remove_button_background"
-        android:foreground="@drawable/white_ripple"
+        android:text="@string/remove"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintTop_toBottomOf="@id/baseLinearLayout"
         app:layout_constraintBottom_toBottomOf="@id/baseLinearLayout"
-        android:translationZ="5dp"
-        android:text="@string/remove"
-        android:textColor="@color/white"
-        android:fontFamily="@font/ubuntu_medium"
-        android:textSize="17sp"
-        android:visibility="gone"
+        style="@style/removeButtonTextViewStyle"
         tools:visibility="visible" />
 
     <ProgressBar

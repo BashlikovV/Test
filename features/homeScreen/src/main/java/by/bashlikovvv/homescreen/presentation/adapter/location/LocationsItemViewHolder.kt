@@ -1,7 +1,5 @@
 package by.bashlikovvv.homescreen.presentation.adapter.location
 
-import android.animation.Animator
-import android.animation.AnimatorListenerAdapter
 import android.animation.ValueAnimator
 import android.graphics.drawable.Drawable
 import android.view.LayoutInflater
@@ -26,8 +24,6 @@ class LocationsItemViewHolder(
     private val decorationDrawable: Drawable?
 ) : RecyclerView.ViewHolder(binding.root) {
 
-    private var animating: Boolean = false
-
     private var expanded: Boolean = false
 
     private val expandAnimator: ValueAnimator = ValueAnimator.ofFloat(1f, 1.01f).apply {
@@ -39,16 +35,6 @@ class LocationsItemViewHolder(
                 height = (wrapContentHeight * progress).toInt()
             }
         }
-        addListener(object : AnimatorListenerAdapter() {
-            override fun onAnimationStart(animation: Animator) {
-                animating = true
-            }
-
-            override fun onAnimationEnd(animation: Animator) {
-                super.onAnimationEnd(animation)
-                animating = false
-            }
-        })
     }
 
     fun bind(
@@ -65,11 +51,9 @@ class LocationsItemViewHolder(
             decorationVertical.setDrawable(it)
         }
         bindImagesRecyclerView(adapter)
-        showRemoveButton(item.isRemoveButtonVisible)
-        binding.removeButton.setOnClickListener {
-            if (item.isRemoveButtonVisible) {
-                callbacks.onRemoveButtonClicked(item.idx)
-            }
+        showRemoveButton(item)
+        binding.locationTextInputEditText.doOnTextChanged { text, _, _, _ ->
+            callbacks.onLocationChanged(item.copy(locationName = text.toString()))
         }
     }
 
@@ -83,7 +67,12 @@ class LocationsItemViewHolder(
         }
     }
 
-    fun showRemoveButton(visibility: Boolean) {
+    fun showRemoveButton(item: LocationState, visibility: Boolean = item.isRemoveButtonVisible) {
+        binding.removeButton.setOnClickListener {
+            if (item.isRemoveButtonVisible) {
+                callbacks.onRemoveButtonClicked(item.idx)
+            }
+        }
         expanded = when {
             expanded && !visibility -> {
                 binding.root.transitionToStart()
@@ -122,9 +111,8 @@ class LocationsItemViewHolder(
     fun bindLocationTextInputEditText(
         item: LocationState
     ) = binding.locationTextInputEditText.apply {
-        setText(item.locationName)
-        doOnTextChanged { text, _, _, _ ->
-            callbacks.onLocationChanged(item.copy(locationName = text.toString()))
+        if (text.toString() != item.locationName) {
+            setTextKeepState(item.locationName)
         }
     }
 

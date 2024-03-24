@@ -30,7 +30,7 @@ interface LocationsDao {
     )
     suspend fun addLocation(locationEntity: LocationEntity)
 
-    @Update
+    @Update(entity = LocationEntity::class, onConflict = OnConflictStrategy.REPLACE)
     suspend fun updateLocation(locationEntity: LocationEntity)
 
 }
