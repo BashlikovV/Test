@@ -5,8 +5,9 @@
     <string name="locations">Locations</string>
     <string name="locations_rus">Локации</string>
     <string name="clock">clock</string>
-    <!-- TODO: Remove or change this placeholder text -->
     <string name="hello_blank_fragment">Hello blank fragment</string>
     <string name="add_location">Add location</string>
     <string name="remove">Удалить</string>
+    <string name="image_uploading_error">Image not uploaded!</string>
+    <string name="image_uploading_error_message">Error when uploading an image. Try again.</string>
 </resources>
