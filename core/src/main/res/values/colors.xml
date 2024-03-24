@@ -4,6 +4,6 @@
     <color name="white">#FFFFFFFF</color>
     <color name="white_25">#40FFFFFF</color>
     <color name="black">#FF000000</color>
-    <color name="black_25">#40000000</color>
+    <color name="black_25">#0A000000</color>
     <color name="transparent">#00000000</color>
 </resources>

@@ -4,6 +4,7 @@
         <shape android:shape="rectangle">
             <corners android:radius="14dp"/>
             <solid android:color="@color/location_text_input_layout_background"/>
+
         </shape>
     </item>
 </selector>
