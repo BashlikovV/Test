@@ -4,13 +4,13 @@ import android.content.Context
 import android.graphics.Canvas
 import android.graphics.Paint
 import android.graphics.PointF
+import android.graphics.Rect
 import android.graphics.RectF
 import android.util.AttributeSet
 import androidx.core.content.ContextCompat
 import androidx.core.view.setPadding
 import by.bashlikovvv.homescreen.R
 import com.google.android.material.floatingactionbutton.FloatingActionButton
-
 
 class ClockFloatingActionButton : FloatingActionButton {
 
@@ -29,7 +29,10 @@ class ClockFloatingActionButton : FloatingActionButton {
 
     private val viewCenter: PointF
         get() {
-            return PointF((this.width / 2).toFloat(), (this.height / 2).toFloat())
+            val rect = Rect()
+            this.getLocalVisibleRect(rect)
+
+            return PointF(rect.exactCenterX(), rect.exactCenterX())
         }
 
     init {
@@ -42,6 +45,7 @@ class ClockFloatingActionButton : FloatingActionButton {
     override fun dispatchDraw(canvas: Canvas) {
         super.dispatchDraw(canvas)
         if (isLaidOut) {
+//            canvas.drawCircle(viewCenter.x.toFloat(), viewCenter.y.toFloat(), 5f, clockBackgroundPaint)
             canvas.drawClock()
         }
     }
@@ -50,17 +54,17 @@ class ClockFloatingActionButton : FloatingActionButton {
         /* background */
         val radius = VIEW_DIAMETER / 2
         var lineRectF = RectF(
-            ((viewCenter.x - radius) - ITEM_OFFSET),
+            (viewCenter.x - radius) - ITEM_OFFSET,
             viewCenter.y - LINE_HEIGHT,
-            ((viewCenter.x + radius) + ITEM_OFFSET),
+            (viewCenter.x + radius) + ITEM_OFFSET,
             viewCenter.y + LINE_HEIGHT
         )
         drawRoundRect(lineRectF, ROUND_RADIUS, ROUND_RADIUS, clockBackgroundPaint)
         lineRectF = RectF(
             viewCenter.x - LINE_HEIGHT,
-            ((viewCenter.y - radius - ITEM_OFFSET)),
+            viewCenter.y - radius - ITEM_OFFSET,
             viewCenter.x + LINE_HEIGHT,
-            ((viewCenter.y + radius + ITEM_OFFSET))
+            viewCenter.y + radius + ITEM_OFFSET
         )
         drawRoundRect(lineRectF, ROUND_RADIUS, ROUND_RADIUS, clockBackgroundPaint)
         drawCircle(viewCenter.x, viewCenter.y, VIEW_DIAMETER, clockBackgroundPaint)
