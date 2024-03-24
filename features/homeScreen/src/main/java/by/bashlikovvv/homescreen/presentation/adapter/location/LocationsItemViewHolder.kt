@@ -108,18 +108,6 @@ class LocationsItemViewHolder(
         elevation = 0f
     }
 
-    private fun imagesListAdapterCallbacks(position: Int) = object : ImagesListAdapter.Callbacks {
-        override fun notifyImageSelected(image: Int) {
-            callbacks.onImageSelected(position, image)
-        }
-        override fun notifyImageUnselected(image: Int) {
-            callbacks.onImageUnselected(position, image)
-        }
-        override fun notifyImageClicked(image: String) {
-            callbacks.onImageClicked(position, image)
-        }
-    }
-
     companion object {
 
         fun from(

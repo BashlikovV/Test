@@ -1,13 +1,11 @@
 package by.bashlikovvv.locationsdata.repository
 
-import android.net.ConnectivityManager
 import by.bashlikovvv.core.domain.model.Location
 import by.bashlikovvv.core.domain.repository.ILocationsRepository
 import by.bashlikovvv.locationsdata.local.dao.LocationsDao
 import by.bashlikovvv.locationsdata.mapper.LocationEntityToLocationMapper
 
 class LocationsRepository(
-    private val cm: ConnectivityManager?,
     private val locationsDao: LocationsDao
 ) : ILocationsRepository {
 

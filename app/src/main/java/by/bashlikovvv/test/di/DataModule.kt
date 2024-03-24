@@ -1,8 +1,6 @@
 package by.bashlikovvv.test.di
 
 import android.app.Application
-import android.content.Context
-import android.net.ConnectivityManager
 import androidx.room.Room
 import by.bashlikovvv.core.di.ApplicationQualifier
 import by.bashlikovvv.core.domain.repository.ILocationsRepository
@@ -54,13 +52,10 @@ class DataModule {
 
     @Provides
     fun provideLocationsRepository(
-        @ApplicationQualifier application: Application,
         locationsDao: LocationsDao
     ): ILocationsRepository {
-        val connectivityManager = application
-            .getSystemService(Context.CONNECTIVITY_SERVICE) as ConnectivityManager?
 
-        return LocationsRepository(connectivityManager, locationsDao)
+        return LocationsRepository(locationsDao)
     }
 
 }
