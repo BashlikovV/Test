@@ -1,6 +1,7 @@
 package by.bashlikovvv.homescreen.presentation.adapter.image
 
 import android.view.LayoutInflater
+import android.view.View
 import android.view.ViewGroup
 import android.widget.ImageView
 import androidx.constraintlayout.widget.ConstraintLayout
@@ -17,8 +18,9 @@ class ImageViewHolder(
 
     fun bind(item: ImageState, callbacks: Callbacks) {
         binding.imageView.setImage(item)
-        if (item.showSelected) showIndicator() else hideIndicator()
-        if (item.isSelected) selectImage() else unselectImage()
+        bindEdition(item.showSelected)
+        bindSelection(item.isSelected && item.showSelected)
+        bindProgress(item.isInProgress)
         binding.imageView.setOnClickListener {
             if (item.showSelected) {
                 onLongClick(callbacks, item)
@@ -31,6 +33,30 @@ class ImageViewHolder(
 
             true
         }
+    }
+
+    fun bindSelection(value: Boolean) {
+        if (value) {
+            selectImage()
+        } else {
+            unselectImage()
+        }
+    }
+
+    fun bindEdition(value: Boolean) {
+        if (value) showIndicator() else hideIndicator()
+    }
+
+    fun bindProgress(value: Boolean) {
+        if (value) showImageProgress() else hideImageProgress()
+    }
+
+    private fun showImageProgress() {
+        binding.progressBar.visibility = View.VISIBLE
+    }
+
+    private fun hideImageProgress() {
+        binding.progressBar.visibility = View.GONE
     }
 
     private fun onLongClick(
@@ -65,7 +91,7 @@ class ImageViewHolder(
         isImageSelected = true
     }
 
-    fun unselectImage() {
+    private fun unselectImage() {
         binding.indicatorSelectedImageView.visibility = ConstraintLayout.GONE
         binding.indicatorUnselectedImageView.visibility = ConstraintLayout.VISIBLE
         isImageSelected = false
@@ -73,7 +99,7 @@ class ImageViewHolder(
 
     companion object {
 
-        operator fun invoke(parent: ViewGroup): ImageViewHolder {
+        fun from(parent: ViewGroup): ImageViewHolder {
             val layoutInflater = LayoutInflater.from(parent.context)
             return ImageViewHolder(
                 SelectableImageViewBinding.inflate(layoutInflater, parent, false)

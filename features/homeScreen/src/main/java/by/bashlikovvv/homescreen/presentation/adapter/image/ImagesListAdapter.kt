@@ -6,10 +6,10 @@ import by.bashlikovvv.homescreen.domain.model.ImageState
 
 class ImagesListAdapter(
     private val callbacks: Callbacks
-) : ListAdapter<ImageState, ImageViewHolder>(ImageItemDiffCallback) {
+) : ListAdapter<ImageState, ImageViewHolder>(ImageItemDiffCallback()) {
     
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): ImageViewHolder {
-        return ImageViewHolder(parent)
+        return ImageViewHolder.from(parent)
     }
 
     override fun onBindViewHolder(holder: ImageViewHolder, position: Int) {
@@ -27,6 +27,19 @@ class ImagesListAdapter(
                 }
             }
         )
+    }
+
+    override fun onBindViewHolder(
+        holder: ImageViewHolder,
+        position: Int,
+        payloads: MutableList<Any>
+    ) {
+        when (val payload = payloads.lastOrNull()) {
+            is ImagePayload.Selection -> { holder.bindSelection(payload.value) }
+            is ImagePayload.Edition -> { holder.bindEdition(payload.value) }
+            is ImagePayload.Progress -> { holder.bindProgress(payload.value) }
+            else -> onBindViewHolder(holder, position)
+        }
     }
 
     interface Callbacks {

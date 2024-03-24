@@ -11,7 +11,7 @@ class LocationsListAdapter(
 ) : ListAdapter<LocationState, LocationsItemViewHolder>(LocationItemDiffCallback()) {
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): LocationsItemViewHolder {
-        return LocationsItemViewHolder(parent, locationsItemViewHolderCallbacks())
+        return LocationsItemViewHolder.from(parent, locationsItemViewHolderCallbacks())
     }
 
     override fun onBindViewHolder(holder: LocationsItemViewHolder, position: Int) {
@@ -28,13 +28,9 @@ class LocationsListAdapter(
     ) {
         when (val payload = payloads.lastOrNull()) {
             is LocationPayload.Progress -> holder.bindProgress(payload.value)
-            is LocationPayload.RemoveButton -> holder.showRemoveButton(payload.value)
+            is LocationPayload.RemoveButton -> holder.showRemoveButton(getItem(position))
             is LocationPayload.Images -> {
-                if (payload.value.map { it.isSelected }.contains(true)) {
-                    holder.showRemoveButton(true)
-                } else {
-                    holder.showRemoveButton(false)
-                }
+                holder.showRemoveButton(getItem(position))
                 holder.bindImagesRecyclerView(
                     getImagesListAdapter(callbacks, holder.adapterPosition).apply {
                         submitList(payload.value)
@@ -64,7 +60,6 @@ class LocationsListAdapter(
             override fun notifyImageSelected(image: Int) {
                 callbacks.notifyImageSelected(image, position)
             }
-
             override fun notifyImageUnselected(image: Int) {
                 callbacks.notifyImageUnselected(image, position)
             }
@@ -73,6 +68,27 @@ class LocationsListAdapter(
             }
         }
     )
+
+    fun addImage(location: Int, builder: (Int) -> ImageState) {
+        val images = currentList.getOrNull(location)?.images?.toMutableList()
+        images ?: return
+        images.add(builder(currentList.size))
+        currentList.getOrNull(location)?.images = images
+        notifyItemChanged(location)
+    }
+
+    fun removeImage(location: Int, image: Int) {
+        val isInProgress = currentList.getOrNull(location)?.images?.getOrNull(image)?.isInProgress
+        if (isInProgress == true) {
+            val images = currentList.getOrNull(location)?.images?.toMutableList()
+            images ?: return
+            images.removeAt(image)
+            currentList.getOrNull(location)?.images = images
+        } else {
+            currentList.getOrNull(location)?.images?.getOrNull(image)?.isInProgress = true
+        }
+        notifyItemChanged(location)
+    }
 
     interface Callbacks {
 
