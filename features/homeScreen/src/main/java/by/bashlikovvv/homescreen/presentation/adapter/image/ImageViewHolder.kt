@@ -11,40 +11,30 @@ import by.bashlikovvv.selectableimageview.databinding.SelectableImageViewBinding
 import com.bumptech.glide.Glide
 
 class ImageViewHolder(
-    private val binding: SelectableImageViewBinding
+    private val binding: SelectableImageViewBinding,
+    private val callbacks: Callbacks
 ) : RecyclerView.ViewHolder(binding.root) {
 
     private var isImageSelected = false
 
-    fun bind(item: ImageState, callbacks: Callbacks) {
+    fun bind(item: ImageState) {
         binding.imageView.setImage(item)
         bindEdition(item.showSelected)
         bindSelection(item.isSelected && item.showSelected)
+        bindClickListeners(item)
         bindProgress(item.isInProgress)
-        binding.imageView.setOnClickListener {
-            if (item.showSelected) {
-                onLongClick(callbacks, item)
-            } else {
-                callbacks.onImageClicked(item)
-            }
-        }
-        binding.imageView.setOnLongClickListener {
-            onLongClick(callbacks, item)
-
-            true
-        }
     }
 
-    fun bindSelection(value: Boolean) {
-        if (value) {
+    fun bindSelection(isSelectedShowSelected: Boolean) {
+        if (isSelectedShowSelected) {
             selectImage()
         } else {
             unselectImage()
         }
     }
 
-    fun bindEdition(value: Boolean) {
-        if (value) showIndicator() else hideIndicator()
+    fun bindEdition(showSelected: Boolean) {
+        if (showSelected) showIndicator() else hideIndicator()
     }
 
     fun bindProgress(value: Boolean) {
@@ -63,16 +53,37 @@ class ImageViewHolder(
         callbacks: Callbacks,
         item: ImageState
     ) {
-        if (isImageSelected) {
+        if (item.isSelected) {
             callbacks.onImageUnselected(item.idx)
         } else {
             callbacks.onImageSelected(item.idx)
         }
     }
 
+    fun bindImageView(image: String) {
+        Glide.with(binding.imageView)
+            .load(image)
+            .into(binding.imageView)
+        bindProgress(false)
+    }
+
+    fun bindClickListeners(item: ImageState) {
+        binding.imageView.setOnClickListener {
+            if (item.showSelected) {
+                onLongClick(callbacks, item)
+            } else {
+                callbacks.onImageClicked(item.imageUri)
+            }
+        }
+        binding.imageView.setOnLongClickListener {
+            onLongClick(callbacks, item)
+
+            true
+        }
+    }
+
     private fun ImageView.setImage(image: ImageState) {
         Glide.with(this)
-            .asDrawable()
             .load(image.imageUri)
             .into(this)
     }
@@ -99,10 +110,11 @@ class ImageViewHolder(
 
     companion object {
 
-        fun from(parent: ViewGroup): ImageViewHolder {
+        fun from(parent: ViewGroup, callbacks: Callbacks): ImageViewHolder {
             val layoutInflater = LayoutInflater.from(parent.context)
             return ImageViewHolder(
-                SelectableImageViewBinding.inflate(layoutInflater, parent, false)
+                SelectableImageViewBinding.inflate(layoutInflater, parent, false),
+                callbacks
             )
         }
 
@@ -114,7 +126,7 @@ class ImageViewHolder(
 
         fun onImageUnselected(image: Int)
 
-        fun onImageClicked(image: ImageState)
+        fun onImageClicked(image: String)
 
     }
 

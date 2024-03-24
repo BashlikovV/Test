@@ -9,21 +9,16 @@ import androidx.activity.OnBackPressedCallback
 import androidx.activity.result.PickVisualMediaRequest
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.fragment.app.viewModels
-import androidx.lifecycle.flowWithLifecycle
-import androidx.lifecycle.lifecycleScope
 import by.bashlikovvv.core.base.BaseFragment
 import by.bashlikovvv.core.domain.model.FlowDestinations
 import by.bashlikovvv.core.ext.launchMain
 import by.bashlikovvv.core.ext.navigateToFlow
 import by.bashlikovvv.homescreen.databinding.FragmentLocationsBinding
 import by.bashlikovvv.homescreen.di.HomeScreenComponentProvider
-import by.bashlikovvv.homescreen.domain.model.ImageState
 import by.bashlikovvv.homescreen.domain.model.LocationState
 import by.bashlikovvv.homescreen.presentation.adapter.location.LocationsListAdapter
 import by.bashlikovvv.homescreen.presentation.viewmodel.HomeScreenViewModel
 import dagger.Lazy
-import kotlinx.coroutines.flow.collectLatest
-import kotlinx.coroutines.launch
 import javax.inject.Inject
 
 class LocationsFragment : BaseFragment<FragmentLocationsBinding>() {
@@ -39,9 +34,7 @@ class LocationsFragment : BaseFragment<FragmentLocationsBinding>() {
     private val launcher = registerForActivityResult(
         ActivityResultContracts.PickMultipleVisualMedia()
     ) { list ->
-        list.forEach {
-            viewModel.addImage(it)
-        }
+        viewModel.addImages(images = list.filter { it.lastPathSegment.toString().isNotEmpty() })
     }
 
     override fun onAttach(context: Context) {
@@ -95,26 +88,16 @@ class LocationsFragment : BaseFragment<FragmentLocationsBinding>() {
     private fun collectViewModelStates() {
         launchMain(
             safeAction = {
-                lifecycleScope.launch {
-                    viewModel.uiState
-                        .flowWithLifecycle(viewLifecycleOwner.lifecycle)
-                        .collect { adapter.submitList(it) }
-                }
+                viewModel.uiState
+                    .collect { adapter.submitList(it) }
             },
             exceptionHandler = viewModel.exceptionsHandler
         )
-        launchMain(
-            safeAction = {
-                viewModel.exceptionsFlow
-                .flowWithLifecycle(viewLifecycleOwner.lifecycle)
-                .collectLatest {
-                    it
-                        .getAlertDialog(requireContext())
-                        .show()
-                }
-            },
-            exceptionHandler = viewModel.exceptionsHandler
-        )
+        viewModel.exceptionsFlow.observe(viewLifecycleOwner) {
+            it
+                .getAlertDialog(requireContext())
+                .show()
+        }
     }
 
     private fun launchImagesViewer() {
@@ -139,8 +122,8 @@ class LocationsFragment : BaseFragment<FragmentLocationsBinding>() {
             override fun notifyImageUnselected(image: Int, location: Int) {
                 viewModel.unselectImage(location, image)
             }
-            override fun notifyOpenImage(image: ImageState) {
-                navigateToFlow(FlowDestinations.ImageScreenFlow(image.imageUri))
+            override fun notifyOpenImage(image: String) {
+                navigateToFlow(FlowDestinations.ImageScreenFlow(image))
             }
             override fun notifyRemoveClicked(location: Int) {
                 viewModel.removeImages(location)

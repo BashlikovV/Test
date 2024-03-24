@@ -10,6 +10,7 @@ import by.bashlikovvv.core.domain.model.CustomThrowable
 import by.bashlikovvv.core.domain.model.Image
 import by.bashlikovvv.core.domain.model.Location
 import by.bashlikovvv.core.domain.model.ParsedException
+import by.bashlikovvv.core.domain.usecase.CheckLocationsDataChangedUseCase
 import by.bashlikovvv.core.domain.usecase.GetLocationsUseCase
 import by.bashlikovvv.core.domain.usecase.GetStringUseCase
 import by.bashlikovvv.core.domain.usecase.UpdateLocationUseCase
@@ -37,7 +38,8 @@ class HomeScreenViewModel(
     private val getStringUseCase: GetStringUseCase,
     private val getLocationsUseCase: GetLocationsUseCase,
     private val uploadImageUseCase: UploadImageUseCase,
-    private val updateLocationUseCase: UpdateLocationUseCase
+    private val updateLocationUseCase: UpdateLocationUseCase,
+    private val checkLocationsDataChangedUseCase: CheckLocationsDataChangedUseCase
 ) : BaseViewModel() {
 
     val exceptionsHandler = CoroutineExceptionHandler { _, throwable ->
@@ -56,17 +58,14 @@ class HomeScreenViewModel(
 
     private val random = ThreadLocalRandom.current()
     private val localChanges = LocalChanges()
-    private val localChangesFlow = MutableStateFlow(OnChange(localChanges, random.nextInt()))
+    private val _localChangesFlow = MutableStateFlow(OnChange(localChanges, random.nextInt()))
 
-    private var _removeImageFlow = SingleLiveEvent<Pair<Int, Int?>>()
-    val removeImageFlow: LiveData<Pair<Int, Int?>> = _removeImageFlow
-
-    val currentLocation: Int
+    private val currentLocation: Int
         get() = localChanges.currentLocation
 
     init {
         loadLocations()
-        val originChangesFlow = localChangesFlow.asStateFlow()
+        val originChangesFlow = _localChangesFlow.asStateFlow()
         _uiState = combine(
             originChangesFlow,
             _locationsFlow,
@@ -85,7 +84,7 @@ class HomeScreenViewModel(
 
     fun updateLocation(location: LocationState) = launchIO(
         safeAction = {
-            updateLocationUseCase.execute(location.idx + 1) {
+            updateLocationUseCase.execute(location.idx) {
                 it.copy(
                     locationName = location.locationName,
                     images = location.images
@@ -99,26 +98,36 @@ class HomeScreenViewModel(
 
     fun selectImage(location: Int, image: Int) {
         localChanges.selectImage(location, image)
-        localChangesFlow.update { OnChange(localChanges, random.nextInt()) }
+        updateLocalChangesFlow(true)
     }
 
     fun unselectImage(location: Int, image: Int) {
         localChanges.unselectImage(location, image)
-        localChangesFlow.update { OnChange(localChanges, random.nextInt()) }
+        updateLocalChangesFlow(true)
     }
 
-    fun addImage(uri: Uri) = launchCustom(
+    fun addImages(images: List<Uri>) = launchCustom(
         safeAction = {
-            val task = uploadImageUseCase.execute(uri)
-            if (task == null) {
-                processImageNotLoaded()
-            } else {
-                task.addOnSuccessListener {
-                    val image = Image(it.toString())
+            val size = _locationsFlow.value[currentLocation].images.size
+            images.forEachIndexed { index, uri ->
+                val imageIds = size + index
+                localChanges.setImageProgress(currentLocation, imageIds)
+                updateLocalChangesFlow(true)
+                val uploadedImageUri = uploadImageUseCase.execute(uri)
+                if (uploadedImageUri == null) {
+                    processImageNotLoaded()
+                } else {
+                    val image = Image(uploadedImageUri.toString())
 
-                    addImageRepository(localChanges.currentLocation, image).invokeOnCompletion {
-                        loadLocations()
+                    updateLocationUseCase.execute(currentLocation) { dbLocation ->
+                        val newImages = mutableListOf<Image>()
+                        newImages.addAll(dbLocation.images)
+                        newImages.add(image)
+
+                        dbLocation.copy(images = newImages)
                     }
+                    localChanges.removeImageProgress(currentLocation, imageIds)
+                    updateLocalChangesFlow(true)
                 }
             }
         },
@@ -130,27 +139,28 @@ class HomeScreenViewModel(
 
     fun clearSelected() {
         localChanges.clearSelectedImages()
-        localChangesFlow.update { OnChange(localChanges, random.nextInt()) }
+        updateLocalChangesFlow(true)
     }
 
-    fun removeImages(location: Int) = launchMain(
+    fun removeImages(location: Int) = launchCustom(
         safeAction = {
-            val imagesToRemove = localChanges.getImagesToRemove(location)
+            val imagesToRemove = localChanges.getImagesToRemove(location).sortedDescending()
             localChanges.clearSelectedImages()
-            localChangesFlow.update { OnChange(localChanges, random.nextInt()) }
+            updateLocalChangesFlow(true)
             imagesToRemove.forEach { image ->
-                _removeImageFlow.postValue(location to image)
-                updateLocationUseCase.execute(location + 1) { dbLocation ->
-                    val images = dbLocation.images.filterIndexed { index, value -> index != image }
+                localChanges.setImageProgress(currentLocation, image)
+                updateLocalChangesFlow(true)
+                updateLocationUseCase.execute(location) { dbLocation ->
+                    val images = dbLocation.images.filterIndexed { index, _ -> index != image }
                     dbLocation.copy(images = images)
                 }
                 localChanges.removeImageProgress(location, image)
-                localChangesFlow.update { OnChange(localChanges, random.nextInt()) }
+                updateLocalChangesFlow(true)
             }
-            loadLocations()
         },
-        onError = { processThrowable(it) }
-    )
+        onError = { processThrowable(it) },
+        dispatcher = imageProcessingDispatcher
+    ).invokeOnCompletion { updateLocalChangesFlow(true) }
 
     private fun processThrowable(throwable: Throwable) = launch(Dispatchers.Main) {
         when (throwable) {
@@ -172,7 +182,6 @@ class HomeScreenViewModel(
 
     private fun processImageNotLoaded() {
         processThrowable(CustomThrowable.ImageUploadingThrowable)
-        _removeImageFlow.postValue(localChanges.currentLocation to null)
     }
 
     private fun titleBuilder(throwable: Throwable): String {
@@ -180,73 +189,116 @@ class HomeScreenViewModel(
             .execute(by.bashlikovvv.core.R.string.smth_went_wrong)
     }
 
-    private fun addImageRepository(location: Int, image: Image) = launchIO(
-        safeAction = {
-            updateLocationUseCase.execute(location + 1) { dbLocation ->
-                val newImages = mutableListOf<Image>().apply {
-                    addAll(dbLocation.images)
-                    add(image)
-                }
-
-                dbLocation.copy(images = newImages)
-            }
-        },
-        onError = { throwable -> processThrowable(throwable) }
-    )
-
-    fun loadingImage(id: Int): ImageState = ImageState(
-        idx = id, imageUri = "", isInProgress = true, showSelected = false, isSelected = false
-    )
-
-    private fun merge(changes: OnChange<LocalChanges>, list: List<LocationState>): List<LocationState> {
+    private suspend fun merge(changes: OnChange<LocalChanges>, list: List<LocationState>): List<LocationState> {
         val localChanges = changes.value
-        return list.mapIndexed { locationIndex, location ->
+        val localList = if (checkLocationsDataChangedUseCase.execute(list.mapToLocation())) {
+            getLocationsUseCase.execute().mapToLocationState(localChanges)
+        } else {
+            list
+        }
+        _locationsFlow.tryEmit(localList)
+        return localList.mapIndexed { locationIndex, location ->
+            val selected = localChanges.containsSelectedImages(locationIndex)
             location.copy(
                 idx = locationIndex,
                 locationName = location.locationName,
-                images = location.images
-                    .mapIndexed { imageIndex, image ->
-                        image.copy(
-                            idx = imageIndex,
-                            imageUri = image.imageUri,
-                            isInProgress = localChanges.isImageInProgress(locationIndex, imageIndex),
-                            showSelected = localChanges.containsSelectedImages(locationIndex),
-                            isSelected = localChanges.isImageSelected(locationIndex, imageIndex)
-                        )
-                    },
+                images = location.images.getImageStatesFromStates(
+                    localChanges, selected, locationIndex
+                ),
                 isInProgress = localChanges.isLocationInProgress(locationIndex),
                 isCurrent = locationIndex == localChanges.currentLocation,
-                isRemoveButtonVisible = localChanges.containsSelectedImages(locationIndex)
+                isRemoveButtonVisible = selected
             )
         }
     }
 
-    private fun List<Location>.mapToLocationState(): List<LocationState> {
+    private fun List<Location>.mapToLocationState(
+        localChanges: LocalChanges = _localChangesFlow.value.value
+    ): List<LocationState> {
         return this.mapIndexed { locationIndex, location ->
+            val locationSelected = localChanges.containsSelectedImages(locationIndex)
             LocationState(
                 idx = locationIndex,
                 locationName = location.locationName,
-                images = location.images.mapIndexed { imageIndex, image ->
-                    ImageState(
-                        idx = imageIndex,
-                        imageUri = image.uri,
-                        isInProgress = localChanges.isImageInProgress(locationIndex, imageIndex),
-                        showSelected = localChanges.containsSelectedImages(locationIndex),
-                        isSelected = localChanges.isImageSelected(locationIndex, imageIndex)
-                    )
-                },
+                images = location.images.getImageStatesFromImages(
+                    localChanges, locationSelected, locationIndex
+                ),
                 isInProgress = localChanges.isLocationInProgress(locationIndex),
                 isCurrent = locationIndex == localChanges.currentLocation,
-                isRemoveButtonVisible = localChanges.containsSelectedImages(locationIndex)
+                isRemoveButtonVisible = locationSelected
             )
         }
     }
+
+    private fun List<ImageState>.getImageStatesFromStates(
+        localChanges: LocalChanges,
+        selected: Boolean,
+        locationIndex: Int
+    ): List<ImageState> {
+        val resultList = this.mapIndexed { imageIndex, image ->
+            image.copy(
+                idx = imageIndex,
+                imageUri = image.imageUri,
+                isInProgress = localChanges.isImageInProgress(locationIndex, imageIndex),
+                showSelected = selected,
+                isSelected = localChanges.isImageSelected(locationIndex, imageIndex)
+            )
+        }.toMutableList()
+        localChanges.extraProgressImages(resultList.size).forEach { idx ->
+            resultList.add(loadingImage(idx))
+        }
+
+        return resultList
+    }
+
+    private fun List<Image>.getImageStatesFromImages(
+        localChanges: LocalChanges,
+        selected: Boolean,
+        locationIndex: Int
+    ): List<ImageState> {
+        val resultList = this.mapIndexed { imageIndex, image ->
+            ImageState(
+                idx = imageIndex,
+                imageUri = image.uri,
+                isInProgress = localChanges.isImageInProgress(locationIndex, imageIndex),
+                showSelected = selected,
+                isSelected = localChanges.isImageSelected(locationIndex, imageIndex)
+            )
+        }.toMutableList()
+        localChanges.extraProgressImages(resultList.size).forEach { idx ->
+            resultList.add(loadingImage(idx))
+        }
+
+        return resultList
+    }
+
+    private fun List<LocationState>.mapToLocation(): List<Location> {
+        return this.map { state ->
+            Location(
+                locationName = state.locationName,
+                images = state.images.map { imageState ->
+                    Image(imageState.imageUri)
+                }
+            )
+        }
+    }
+
+    private fun updateLocalChangesFlow(notify: Boolean) {
+        _localChangesFlow.update {
+            OnChange(localChanges, if (notify) random.nextInt() else it.customizer)
+        }
+    }
+
+    private fun loadingImage(idx: Int): ImageState = ImageState(
+        idx = idx, imageUri = "", isInProgress = true, showSelected = false, isSelected = false
+    )
 
     class Factory @Inject constructor(
         private val getStringUseCase: Provider<GetStringUseCase>,
         private val getLocationsUseCase: Provider<GetLocationsUseCase>,
         private val uploadImageUseCase: Provider<UploadImageUseCase>,
-        private val updateLocationUseCase: Provider<UpdateLocationUseCase>
+        private val updateLocationUseCase: Provider<UpdateLocationUseCase>,
+        private val checkLocationsDataChangedUseCase: Provider<CheckLocationsDataChangedUseCase>
     ) : ViewModelProvider.Factory {
 
         @Suppress("UNCHECKED_CAST")
@@ -256,7 +308,8 @@ class HomeScreenViewModel(
                 getStringUseCase = getStringUseCase.get(),
                 getLocationsUseCase = getLocationsUseCase.get(),
                 uploadImageUseCase = uploadImageUseCase.get(),
-                updateLocationUseCase = updateLocationUseCase.get()
+                updateLocationUseCase = updateLocationUseCase.get(),
+                checkLocationsDataChangedUseCase = checkLocationsDataChangedUseCase.get()
             ) as T
         }
 

@@ -17,19 +17,21 @@
         android:id="@+id/bottomBar"
         android:layout_width="match_parent"
         android:layout_height="60dp"
-        style="@style/homeFlowBottomBarStyle"/>
+        style="@style/homeFlowBottomBarStyle"
+        app:fabCradleVerticalOffset="0dp" />
 
     <com.google.android.material.bottomnavigation.BottomNavigationView
         android:id="@+id/bottomNavigationView"
         android:layout_width="match_parent"
         android:layout_height="60dp"
-        style="@style/homeFlowBottomNavigationViewStyle"/>
+        style="@style/homeFlowBottomNavigationViewStyle"
+        app:itemBackground="@null" />
 
     <by.bashlikovvv.homescreen.presentation.view.ClockFloatingActionButton
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
+        android:layout_width="60dp"
+        android:layout_height="60dp"
         app:layout_anchor="@id/bottomBar"
-        style="@style/homeFlowClockFloatingActionButton"/>
-
+        style="@style/homeFlowClockFloatingActionButton"
+        android:layout_marginBottom="0dp"/>
 
 </androidx.coordinatorlayout.widget.CoordinatorLayout>

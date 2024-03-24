@@ -2,7 +2,6 @@ package by.bashlikovvv.homescreen.presentation.adapter.location
 
 import android.view.ViewGroup
 import androidx.recyclerview.widget.ListAdapter
-import by.bashlikovvv.homescreen.domain.model.ImageState
 import by.bashlikovvv.homescreen.domain.model.LocationState
 import by.bashlikovvv.homescreen.presentation.adapter.image.ImagesListAdapter
 
@@ -11,13 +10,16 @@ class LocationsListAdapter(
 ) : ListAdapter<LocationState, LocationsItemViewHolder>(LocationItemDiffCallback()) {
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): LocationsItemViewHolder {
-        return LocationsItemViewHolder.from(parent, locationsItemViewHolderCallbacks())
+        return LocationsItemViewHolder.from(
+            parent = parent,
+            callbacks = locationsItemViewHolderCallbacks()
+        )
     }
 
     override fun onBindViewHolder(holder: LocationsItemViewHolder, position: Int) {
         holder.bind(
             item = getItem(position),
-            adapter = getImagesListAdapter(callbacks, holder.adapterPosition)
+            imagesListAdapter = ImagesListAdapter(imagesLIstAdapterCallbacks(position))
         )
     }
 
@@ -31,11 +33,7 @@ class LocationsListAdapter(
             is LocationPayload.RemoveButton -> holder.showRemoveButton(getItem(position))
             is LocationPayload.Images -> {
                 holder.showRemoveButton(getItem(position))
-                holder.bindImagesRecyclerView(
-                    getImagesListAdapter(callbacks, holder.adapterPosition).apply {
-                        submitList(payload.value)
-                    }
-                )
+                holder.bindImagesRecyclerView(payload.value)
             }
             is LocationPayload.LocationName -> holder.bindLocationTextInputEditText(payload.value)
             else -> onBindViewHolder(holder, position)
@@ -53,41 +51,27 @@ class LocationsListAdapter(
             override fun onRemoveButtonClicked(location: Int) {
                 callbacks.notifyRemoveClicked(location)
             }
-        }
-
-    private fun getImagesListAdapter(callbacks: Callbacks, position: Int) = ImagesListAdapter(
-        callbacks = object : ImagesListAdapter.Callbacks {
-            override fun notifyImageSelected(image: Int) {
+            override fun onImageSelected(position: Int, image: Int) {
                 callbacks.notifyImageSelected(image, position)
             }
-            override fun notifyImageUnselected(image: Int) {
+            override fun onImageUnselected(position: Int, image: Int) {
                 callbacks.notifyImageUnselected(image, position)
             }
-            override fun notifyImageClicked(image: ImageState) {
+            override fun onImageClicked(position: Int, image: String) {
                 callbacks.notifyOpenImage(image)
             }
         }
-    )
 
-    fun addImage(location: Int, builder: (Int) -> ImageState) {
-        val images = currentList.getOrNull(location)?.images?.toMutableList()
-        images ?: return
-        images.add(builder(currentList.size))
-        currentList.getOrNull(location)?.images = images
-        notifyItemChanged(location)
-    }
-
-    fun removeImage(location: Int, image: Int) {
-        val isInProgress = currentList.getOrNull(location)?.images?.getOrNull(image)?.isInProgress
-        if (isInProgress == true) {
-            val images = currentList.getOrNull(location)?.images?.toMutableList()
-            images ?: return
-            images.removeAt(image)
-            currentList.getOrNull(location)?.images = images
-        } else {
-            currentList.getOrNull(location)?.images?.getOrNull(image)?.isInProgress = true
+    private fun imagesLIstAdapterCallbacks(location: Int) = object : ImagesListAdapter.Callbacks {
+        override fun notifyImageSelected(image: Int) {
+            callbacks.notifyImageSelected(image, location)
         }
-        notifyItemChanged(location)
+        override fun notifyImageUnselected(image: Int) {
+            callbacks.notifyImageUnselected(image, location)
+        }
+        override fun notifyImageClicked(image: String) {
+            callbacks.notifyRemoveClicked(location)
+        }
     }
 
     interface Callbacks {
@@ -100,7 +84,7 @@ class LocationsListAdapter(
 
         fun notifyImageUnselected(image: Int, location: Int)
 
-        fun notifyOpenImage(image: ImageState)
+        fun notifyOpenImage(image: String)
 
         fun notifyRemoveClicked(location: Int)
 

@@ -25,9 +25,21 @@ class LocationsRepository(
         locationsDao.addLocation(mapper.mapToEntity(location))
     }
 
-    override suspend fun updateLocation(id: Int, modifier: (Location) -> Location) {
+    override suspend fun updateLocation(id: Int, modifier: suspend (Location) -> Location) {
         val updateData = modifier(mapper.mapFromEntity(locationsDao.getLocationById(id)))
         locationsDao.updateLocation(LocationEntityToLocationMapper(id).mapToEntity(updateData))
+    }
+
+    override suspend fun checkDataChanged(locations: List<Location>): Boolean {
+        val dbLocations = locationsDao.getLocations()
+        return when {
+            dbLocations.size != locations.size -> true
+            dbLocations.map { it.locationName } != locations.map { it.locationName } -> true
+            dbLocations.map { it.images.size } != locations.map { it.images.size } -> true
+            dbLocations.map { it.images } != locations.map { it.images } -> true
+
+            else -> false
+        }
     }
 
 }

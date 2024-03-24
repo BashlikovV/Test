@@ -17,7 +17,6 @@ class HomeFlowFragment : BaseFlowFragment() {
     override fun init(root: View) {
         val bottomNavBar = root
             .findViewById<BottomNavigationView>(R.id.bottomNavigationView)
-
         NavigationUI.setupWithNavController(bottomNavBar, flowNavController)
     }
 

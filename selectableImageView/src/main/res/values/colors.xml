@@ -1,4 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <color name="white_25">#40FFFFFF</color>
+
+    <color name="progress_bar_color">#FF869495</color>
 </resources>

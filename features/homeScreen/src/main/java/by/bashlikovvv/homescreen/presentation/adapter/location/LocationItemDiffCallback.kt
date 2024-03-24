@@ -18,13 +18,7 @@ class LocationItemDiffCallback : DiffUtil.ItemCallback<LocationState>() {
                 LocationPayload.Progress(newItem.isInProgress)
             }
             oldItem.images != newItem.images -> {
-                if (oldItem.images.size != newItem.images.size
-                    && newItem.images.size % 3 == 1
-                    || oldItem.images.size % 3 == 0) {
-                    super.getChangePayload(oldItem, newItem)
-                } else {
-                    LocationPayload.Images(newItem.images)
-                }
+                LocationPayload.Images(newItem.images)
             }
             oldItem.isRemoveButtonVisible != newItem.isRemoveButtonVisible -> {
                 LocationPayload.RemoveButton(newItem.isRemoveButtonVisible)

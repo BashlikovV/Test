@@ -10,6 +10,8 @@ interface ILocationsRepository {
 
     suspend fun addLocation(location: Location)
 
-    suspend fun updateLocation(id: Int, modifier: (Location) -> Location)
+    suspend fun updateLocation(id: Int, modifier: suspend (Location) -> Location)
+
+    suspend fun checkDataChanged(locations: List<Location>): Boolean
 
 }

@@ -1,18 +1,17 @@
 package by.bashlikovvv.homescreen.presentation.adapter.location
 
-import android.animation.ValueAnimator
 import android.graphics.drawable.Drawable
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import androidx.constraintlayout.motion.widget.MotionLayout
 import androidx.core.content.ContextCompat
-import androidx.core.view.updateLayoutParams
 import androidx.core.widget.doOnTextChanged
 import androidx.recyclerview.widget.DividerItemDecoration
 import androidx.recyclerview.widget.RecyclerView
 import by.bashlikovvv.homescreen.R
 import by.bashlikovvv.homescreen.databinding.LocationsListItemBinding
+import by.bashlikovvv.homescreen.domain.model.ImageState
 import by.bashlikovvv.homescreen.domain.model.LocationState
 import by.bashlikovvv.homescreen.presentation.adapter.image.ImagesListAdapter
 
@@ -26,23 +25,16 @@ class LocationsItemViewHolder(
 
     private var expanded: Boolean = false
 
-    private val expandAnimator: ValueAnimator = ValueAnimator.ofFloat(1f, 1.01f).apply {
-        duration = ANIMATION_DURATION
-        addUpdateListener {
-            val progress = it.animatedValue as Float
-            val wrapContentHeight = binding.baseLinearLayout.measureWrapContentHeight()
-            binding.baseLinearLayout.updateLayoutParams {
-                height = (wrapContentHeight * progress).toInt()
-            }
-        }
+    init {
+        binding.root.transitionToStart()
     }
 
     fun bind(
         item: LocationState,
-        adapter: ImagesListAdapter
+        imagesListAdapter: ImagesListAdapter
     ) {
         bindProgress(item.isInProgress)
-        adapter.submitList(item.images)
+        imagesListAdapter.submitList(item.images)
         binding.root.bindRoot()
         bindLocationTextInputEditText(item)
         bindAddLocationImageView(item.idx)
@@ -50,7 +42,8 @@ class LocationsItemViewHolder(
             decorationHorizontal.setDrawable(it)
             decorationVertical.setDrawable(it)
         }
-        bindImagesRecyclerView(adapter)
+        binding.imagesRecyclerView.adapter = imagesListAdapter
+        bindImagesRecyclerView(item.images)
         showRemoveButton(item)
         binding.locationTextInputEditText.doOnTextChanged { text, _, _, _ ->
             callbacks.onLocationChanged(item.copy(locationName = text.toString()))
@@ -67,35 +60,30 @@ class LocationsItemViewHolder(
         }
     }
 
-    fun showRemoveButton(item: LocationState, visibility: Boolean = item.isRemoveButtonVisible) {
+    fun showRemoveButton(
+        item: LocationState,
+        visibility: Boolean = item.isRemoveButtonVisible
+    ) {
         binding.removeButton.setOnClickListener {
             if (item.isRemoveButtonVisible) {
                 callbacks.onRemoveButtonClicked(item.idx)
             }
         }
-        expanded = when {
-            expanded && !visibility -> {
-                binding.root.transitionToStart()
-                expandAnimator.reverse()
-                false
-            }
-            !visibility -> {
-                binding.root.transitionToStart()
-                expandAnimator.reverse()
-                false
-            }
-            else -> {
-                binding.root.transitionToEnd()
-                expandAnimator.start()
-                true
-            }
+        expanded = if (visibility) {
+            binding.root.transitionToEnd()
+            true
+
+        } else {
+            binding.root.transitionToStart()
+
+            false
         }
     }
 
     fun bindImagesRecyclerView(
-        customAdapter: ImagesListAdapter
+        newImagesList: List<ImageState>
     ) = binding.imagesRecyclerView.apply {
-        adapter = customAdapter
+        (adapter as ImagesListAdapter).submitList(newImagesList)
         binding.imagesRecyclerView.removeItemDecoration(decorationHorizontal)
         binding.imagesRecyclerView.removeItemDecoration(decorationVertical)
         binding.imagesRecyclerView.addItemDecoration(decorationHorizontal, 0)
@@ -120,14 +108,16 @@ class LocationsItemViewHolder(
         elevation = 0f
     }
 
-    private fun ViewGroup.measureWrapContentHeight(): Int {
-        this.measure(
-            View.MeasureSpec
-                .makeMeasureSpec((this.parent as View).measuredWidth, View.MeasureSpec.EXACTLY),
-            View.MeasureSpec
-                .makeMeasureSpec(0, View.MeasureSpec.UNSPECIFIED)
-        )
-        return measuredHeight
+    private fun imagesListAdapterCallbacks(position: Int) = object : ImagesListAdapter.Callbacks {
+        override fun notifyImageSelected(image: Int) {
+            callbacks.onImageSelected(position, image)
+        }
+        override fun notifyImageUnselected(image: Int) {
+            callbacks.onImageUnselected(position, image)
+        }
+        override fun notifyImageClicked(image: String) {
+            callbacks.onImageClicked(position, image)
+        }
     }
 
     companion object {
@@ -143,11 +133,9 @@ class LocationsItemViewHolder(
                 callbacks,
                 DividerItemDecoration(parent.context, DividerItemDecoration.HORIZONTAL),
                 DividerItemDecoration(parent.context, DividerItemDecoration.VERTICAL),
-                ContextCompat.getDrawable(parent.context, R.drawable.image_decoration),
+                ContextCompat.getDrawable(parent.context, R.drawable.image_decoration)
             )
         }
-
-        const val ANIMATION_DURATION = 300L
 
     }
 
@@ -158,6 +146,12 @@ class LocationsItemViewHolder(
         fun onAddImageClicked(location: Int)
 
         fun onRemoveButtonClicked(location: Int)
+
+        fun onImageSelected(position: Int, image: Int)
+
+        fun onImageUnselected(position: Int, image: Int)
+
+        fun onImageClicked(position: Int, image: String)
 
     }
 

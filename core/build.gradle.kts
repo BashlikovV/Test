@@ -9,7 +9,7 @@ android {
     compileSdk = 34
 
     defaultConfig {
-        minSdk = 30
+        minSdk = 29
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
         consumerProguardFiles("consumer-rules.pro")
@@ -54,4 +54,6 @@ dependencies {
 
     implementation(platform(libs.firebase.boom))
     implementation(libs.firebase.storage)
+
+    implementation(libs.kotlinx.coroutines.play.services)
 }

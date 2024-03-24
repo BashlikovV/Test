@@ -5,7 +5,7 @@ import by.bashlikovvv.homescreen.domain.model.ImageState
 
 class ImageItemDiffCallback : DiffUtil.ItemCallback<ImageState>() {
     override fun areItemsTheSame(oldItem: ImageState, newItem: ImageState): Boolean {
-        return oldItem === newItem
+        return oldItem.idx == newItem.idx
     }
 
     override fun areContentsTheSame(oldItem: ImageState, newItem: ImageState): Boolean {
@@ -13,17 +13,17 @@ class ImageItemDiffCallback : DiffUtil.ItemCallback<ImageState>() {
     }
 
     override fun getChangePayload(oldItem: ImageState, newItem: ImageState): Any? {
-        when {
+        return when {
+            oldItem.imageUri != newItem.imageUri -> {
+                ImagePayload.Image(newItem.imageUri)
+            }
             oldItem.isInProgress != newItem.isInProgress -> {
                 ImagePayload.Progress(newItem.isInProgress)
             }
-            oldItem.showSelected != newItem.showSelected -> {
-                ImagePayload.Edition(newItem.showSelected)
-            }
             oldItem.isSelected != newItem.isSelected -> {
-                ImagePayload.Selection(newItem.isSelected)
+                ImagePayload.Selection(newItem)
             }
+            else -> super.getChangePayload(oldItem, newItem)
         }
-        return super.getChangePayload(oldItem, newItem)
     }
 }

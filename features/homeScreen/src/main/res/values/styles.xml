@@ -93,6 +93,7 @@
         <item name="android:background">@drawable/remove_button_background</item>
         <item name="android:foreground">@drawable/white_ripple</item>
         <item name="android:translationZ">5dp</item>
+        <item name="android:visibility">gone</item>
         <item name="android:textAppearance">@style/removeButtonTextViewTextAppearance</item>
     </style>
 

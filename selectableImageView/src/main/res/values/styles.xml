@@ -1,9 +1,8 @@
 <?xml version="1.0" encoding="utf-8"?>
-<resources xmlns:tools="http://schemas.android.com/tools">
+<resources>
     <style name="selectableImageStyle">
         <item name="android:clickable">true</item>
         <item name="android:background">@drawable/selectable_image_view_background</item>
-        <item name="android:clipToOutline" tools:targetApi="s">true</item>
         <item name="android:foreground">@drawable/white_ripple</item>
         <item name="android:scaleType">centerCrop</item>
     </style>

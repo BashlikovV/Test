@@ -9,12 +9,8 @@ class ImagesListAdapter(
 ) : ListAdapter<ImageState, ImageViewHolder>(ImageItemDiffCallback()) {
     
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): ImageViewHolder {
-        return ImageViewHolder.from(parent)
-    }
-
-    override fun onBindViewHolder(holder: ImageViewHolder, position: Int) {
-        holder.bind(
-            item = getItem(position),
+        return ImageViewHolder.from(
+            parent = parent,
             callbacks = object : ImageViewHolder.Callbacks {
                 override fun onImageSelected(image: Int) {
                     callbacks.notifyImageSelected(image)
@@ -22,11 +18,15 @@ class ImagesListAdapter(
                 override fun onImageUnselected(image: Int) {
                     callbacks.notifyImageUnselected(image)
                 }
-                override fun onImageClicked(image: ImageState) {
+                override fun onImageClicked(image: String) {
                     callbacks.notifyImageClicked(image)
                 }
             }
         )
+    }
+
+    override fun onBindViewHolder(holder: ImageViewHolder, position: Int) {
+        holder.bind(item = getItem(position))
     }
 
     override fun onBindViewHolder(
@@ -35,8 +35,14 @@ class ImagesListAdapter(
         payloads: MutableList<Any>
     ) {
         when (val payload = payloads.lastOrNull()) {
-            is ImagePayload.Selection -> { holder.bindSelection(payload.value) }
-            is ImagePayload.Edition -> { holder.bindEdition(payload.value) }
+            is ImagePayload.Image -> { holder.bindImageView(payload.uri) }
+            is ImagePayload.Selection -> {
+                payload.value.let { value ->
+                    holder.bindClickListeners(value)
+                    holder.bindEdition(value.showSelected)
+                    holder.bindSelection(value.isSelected && value.showSelected)
+                }
+            }
             is ImagePayload.Progress -> { holder.bindProgress(payload.value) }
             else -> onBindViewHolder(holder, position)
         }
@@ -48,7 +54,7 @@ class ImagesListAdapter(
 
         fun notifyImageUnselected(image: Int)
 
-        fun notifyImageClicked(image: ImageState)
+        fun notifyImageClicked(image: String)
         
     }
 

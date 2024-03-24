@@ -27,16 +27,14 @@ data class LocalChanges(
         idsImagesInProgress.getOrNull(locationIds)?.add(imageIds)
     }
 
-    fun removeCurrentLocationLastImageProgress(): Int? {
-        for (i in idsImagesInProgress.size - 1..currentLocation) {
-            idsImagesInProgress.add(mutableSetOf())
+    fun extraProgressImages(currentSize: Int): List<Int> {
+        val imagesSet = idsImagesInProgress.getOrNull(currentLocation) ?: return listOf()
+        val diff = (imagesSet.maxByOrNull { it } ?: 1) + 1 - currentSize
+        return if (diff > 0) {
+            imagesSet.toList().takeLast(diff)
+        } else {
+            listOf()
         }
-        val lastImageIds = idsImagesInProgress
-            .getOrNull(currentLocation)
-            ?.maxBy { it } ?: return null
-        idsImagesInProgress.getOrNull(currentLocation)?.remove(lastImageIds)
-
-        return lastImageIds
     }
 
     fun removeImageProgress(locationIds: Int, imageIds: Int) {

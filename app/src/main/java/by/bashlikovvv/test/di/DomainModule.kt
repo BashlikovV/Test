@@ -7,6 +7,7 @@ import by.bashlikovvv.core.di.AppScope
 import by.bashlikovvv.core.di.ApplicationQualifier
 import by.bashlikovvv.core.domain.repository.ILocationsRepository
 import by.bashlikovvv.core.domain.usecase.AddLocationUseCase
+import by.bashlikovvv.core.domain.usecase.CheckLocationsDataChangedUseCase
 import by.bashlikovvv.core.domain.usecase.GetLocationByIdUseCase
 import by.bashlikovvv.core.domain.usecase.GetLocationsUseCase
 import by.bashlikovvv.core.domain.usecase.GetStringUseCase
@@ -63,6 +64,13 @@ class DomainModule {
         locationsRepository: ILocationsRepository
     ): UpdateLocationUseCase {
         return UpdateLocationUseCase(locationsRepository)
+    }
+
+    @[Provides AppScope]
+    fun provideCheckLocationsDataChangedUseCase(
+        locationsRepository: ILocationsRepository
+    ): CheckLocationsDataChangedUseCase {
+        return CheckLocationsDataChangedUseCase(locationsRepository)
     }
 
 }

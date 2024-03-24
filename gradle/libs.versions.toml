@@ -21,6 +21,7 @@ glide = "4.16.0"
 roomKtx = "2.6.1"
 ksp = "1.9.10-1.0.13"
 retrofit = "2.9.0"
+coroutines-play-services = "1.7.1"
 
 [libraries]
 androidx-core-ktx = { group = "androidx.core", name = "core-ktx", version.ref = "coreKtx" }
@@ -48,6 +49,7 @@ github-bumptech-glide = { group = "com.github.bumptech.glide", name = "glide", v
 androidx-room-ktx = { group = "androidx.room", name = "room-ktx", version.ref = "roomKtx" }
 androidx-room-compiler = { group = "androidx.room", name = "room-compiler", version.ref = "roomKtx" }
 com-squareup-retrofit2 = { group = "com.squareup.retrofit2", name = "retrofit", version.ref = "retrofit" }
+kotlinx-coroutines-play-services = { group = "org.jetbrains.kotlinx", name = "kotlinx-coroutines-play-services", version.ref = "coroutines-play-services" }
 
 [plugins]
 androidApplication = { id = "com.android.application", version.ref = "agp" }
