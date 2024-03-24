@@ -1,6 +1,8 @@
 package by.bashlikovvv.test.di
 
 import android.app.Application
+import android.content.Context
+import android.net.ConnectivityManager
 import by.bashlikovvv.core.di.AppScope
 import by.bashlikovvv.core.di.ApplicationQualifier
 import by.bashlikovvv.core.domain.repository.ILocationsRepository
@@ -47,9 +49,13 @@ class DomainModule {
 
     @[Provides AppScope]
     fun provideUploadImageUseCase(
+        @ApplicationQualifier application: Application,
         firebaseStorage: FirebaseStorage
     ): UploadImageUseCase {
-        return UploadImageUseCase(firebaseStorage)
+        val connectivityManager = application
+            .getSystemService(Context.CONNECTIVITY_SERVICE) as ConnectivityManager?
+
+        return UploadImageUseCase(firebaseStorage, connectivityManager)
     }
 
     @[Provides AppScope]
