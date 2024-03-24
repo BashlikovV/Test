@@ -10,8 +10,10 @@ import by.bashlikovvv.core.domain.usecase.AddLocationUseCase
 import by.bashlikovvv.core.domain.usecase.CheckLocationsDataChangedUseCase
 import by.bashlikovvv.core.domain.usecase.GetLocationByIdUseCase
 import by.bashlikovvv.core.domain.usecase.GetLocationsUseCase
+import by.bashlikovvv.core.domain.usecase.GetSectionNameUseCase
 import by.bashlikovvv.core.domain.usecase.GetStringUseCase
 import by.bashlikovvv.core.domain.usecase.UpdateLocationUseCase
+import by.bashlikovvv.core.domain.usecase.UpdateSectionNameUseCase
 import by.bashlikovvv.core.domain.usecase.UploadImageUseCase
 import com.google.firebase.storage.FirebaseStorage
 import dagger.Module
@@ -71,6 +73,20 @@ class DomainModule {
         locationsRepository: ILocationsRepository
     ): CheckLocationsDataChangedUseCase {
         return CheckLocationsDataChangedUseCase(locationsRepository)
+    }
+
+    @[Provides AppScope]
+    fun provideGetSectionNameUseCase(
+        locationsRepository: ILocationsRepository
+    ): GetSectionNameUseCase {
+        return GetSectionNameUseCase(locationsRepository)
+    }
+
+    @[Provides AppScope]
+    fun provideUpdateSectionNameUseCase(
+        locationsRepository: ILocationsRepository
+    ): UpdateSectionNameUseCase {
+        return UpdateSectionNameUseCase(locationsRepository)
     }
 
 }

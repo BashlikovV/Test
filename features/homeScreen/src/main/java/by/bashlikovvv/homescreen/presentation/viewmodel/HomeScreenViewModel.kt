@@ -12,8 +12,10 @@ import by.bashlikovvv.core.domain.model.Location
 import by.bashlikovvv.core.domain.model.ParsedException
 import by.bashlikovvv.core.domain.usecase.CheckLocationsDataChangedUseCase
 import by.bashlikovvv.core.domain.usecase.GetLocationsUseCase
+import by.bashlikovvv.core.domain.usecase.GetSectionNameUseCase
 import by.bashlikovvv.core.domain.usecase.GetStringUseCase
 import by.bashlikovvv.core.domain.usecase.UpdateLocationUseCase
+import by.bashlikovvv.core.domain.usecase.UpdateSectionNameUseCase
 import by.bashlikovvv.core.domain.usecase.UploadImageUseCase
 import by.bashlikovvv.core.ext.toParsedException
 import by.bashlikovvv.homescreen.R
@@ -39,7 +41,9 @@ class HomeScreenViewModel(
     private val getLocationsUseCase: GetLocationsUseCase,
     private val uploadImageUseCase: UploadImageUseCase,
     private val updateLocationUseCase: UpdateLocationUseCase,
-    private val checkLocationsDataChangedUseCase: CheckLocationsDataChangedUseCase
+    private val checkLocationsDataChangedUseCase: CheckLocationsDataChangedUseCase,
+    private val getSectionNameUseCase: GetSectionNameUseCase,
+    private val updateSectionNameUseCase: UpdateSectionNameUseCase
 ) : BaseViewModel() {
 
     val exceptionsHandler = CoroutineExceptionHandler { _, throwable ->
@@ -55,6 +59,9 @@ class HomeScreenViewModel(
 
     private var _uiState: Flow<List<LocationState>>
     val uiState get() = _uiState
+
+    private var _sectionNameFlow = MutableStateFlow("")
+    val sectionNameFlow = _sectionNameFlow.asStateFlow()
 
     private val random = ThreadLocalRandom.current()
     private val localChanges = LocalChanges()
@@ -78,6 +85,7 @@ class HomeScreenViewModel(
             _locationsFlow.tryEmit(
                 getLocationsUseCase.execute().mapToLocationState()
             )
+            _sectionNameFlow.tryEmit(getSectionNameUseCase.execute())
         },
         onError = { processThrowable(it) }
     )
@@ -161,6 +169,17 @@ class HomeScreenViewModel(
         onError = { processThrowable(it) },
         dispatcher = imageProcessingDispatcher
     ).invokeOnCompletion { updateLocalChangesFlow(true) }
+
+    fun updateSectionName(newName: String) {
+        launchIO(
+            safeAction = {
+                updateSectionNameUseCase.execute(newName)
+            },
+            onError = { processThrowable(it) }
+        ).invokeOnCompletion {
+            _sectionNameFlow.tryEmit(newName)
+        }
+    }
 
     private fun processThrowable(throwable: Throwable) = launch(Dispatchers.Main) {
         when (throwable) {
@@ -298,7 +317,9 @@ class HomeScreenViewModel(
         private val getLocationsUseCase: Provider<GetLocationsUseCase>,
         private val uploadImageUseCase: Provider<UploadImageUseCase>,
         private val updateLocationUseCase: Provider<UpdateLocationUseCase>,
-        private val checkLocationsDataChangedUseCase: Provider<CheckLocationsDataChangedUseCase>
+        private val checkLocationsDataChangedUseCase: Provider<CheckLocationsDataChangedUseCase>,
+        private val getSectionNameUseCase: Provider<GetSectionNameUseCase>,
+        private val updateSectionNameUseCase: Provider<UpdateSectionNameUseCase>
     ) : ViewModelProvider.Factory {
 
         @Suppress("UNCHECKED_CAST")
@@ -309,7 +330,9 @@ class HomeScreenViewModel(
                 getLocationsUseCase = getLocationsUseCase.get(),
                 uploadImageUseCase = uploadImageUseCase.get(),
                 updateLocationUseCase = updateLocationUseCase.get(),
-                checkLocationsDataChangedUseCase = checkLocationsDataChangedUseCase.get()
+                checkLocationsDataChangedUseCase = checkLocationsDataChangedUseCase.get(),
+                getSectionNameUseCase = getSectionNameUseCase.get(),
+                updateSectionNameUseCase = updateSectionNameUseCase.get()
             ) as T
         }
 

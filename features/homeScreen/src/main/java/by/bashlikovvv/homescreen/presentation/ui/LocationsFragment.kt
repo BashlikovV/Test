@@ -8,6 +8,7 @@ import android.view.ViewGroup
 import androidx.activity.OnBackPressedCallback
 import androidx.activity.result.PickVisualMediaRequest
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.core.widget.doOnTextChanged
 import androidx.fragment.app.viewModels
 import by.bashlikovvv.core.base.BaseFragment
 import by.bashlikovvv.core.domain.model.FlowDestinations
@@ -19,6 +20,7 @@ import by.bashlikovvv.homescreen.domain.model.LocationState
 import by.bashlikovvv.homescreen.presentation.adapter.location.LocationsListAdapter
 import by.bashlikovvv.homescreen.presentation.viewmodel.HomeScreenViewModel
 import dagger.Lazy
+import kotlinx.coroutines.flow.collectLatest
 import javax.inject.Inject
 
 class LocationsFragment : BaseFragment<FragmentLocationsBinding>() {
@@ -69,6 +71,9 @@ class LocationsFragment : BaseFragment<FragmentLocationsBinding>() {
             owner = viewLifecycleOwner,
             onBackPressedCallback = onBackPressedCallback()
         )
+        binding.locationTextInputEditText.doOnTextChanged { text, _, _, _ ->
+            viewModel.updateSectionName(text.toString())
+        }
     }
 
     private fun onBackPressedCallback() = object : OnBackPressedCallback(true) {
@@ -90,6 +95,16 @@ class LocationsFragment : BaseFragment<FragmentLocationsBinding>() {
             safeAction = {
                 viewModel.uiState
                     .collect { adapter.submitList(it) }
+            },
+            exceptionHandler = viewModel.exceptionsHandler
+        )
+        launchMain(
+            safeAction = {
+                viewModel.sectionNameFlow.collectLatest {
+                    if (binding.locationTextInputEditText.text.toString() != it) {
+                        binding.locationTextInputEditText.setTextKeepState(it)
+                    }
+                }
             },
             exceptionHandler = viewModel.exceptionsHandler
         )

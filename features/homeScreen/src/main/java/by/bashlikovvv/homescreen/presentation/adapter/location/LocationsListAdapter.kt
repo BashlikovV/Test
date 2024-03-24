@@ -51,15 +51,6 @@ class LocationsListAdapter(
             override fun onRemoveButtonClicked(location: Int) {
                 callbacks.notifyRemoveClicked(location)
             }
-            override fun onImageSelected(position: Int, image: Int) {
-                callbacks.notifyImageSelected(image, position)
-            }
-            override fun onImageUnselected(position: Int, image: Int) {
-                callbacks.notifyImageUnselected(image, position)
-            }
-            override fun onImageClicked(position: Int, image: String) {
-                callbacks.notifyOpenImage(image)
-            }
         }
 
     private fun imagesLIstAdapterCallbacks(location: Int) = object : ImagesListAdapter.Callbacks {
@@ -70,7 +61,7 @@ class LocationsListAdapter(
             callbacks.notifyImageUnselected(image, location)
         }
         override fun notifyImageClicked(image: String) {
-            callbacks.notifyRemoveClicked(location)
+            callbacks.notifyOpenImage(image)
         }
     }
 

@@ -1,12 +1,14 @@
 package by.bashlikovvv.locationsdata.repository
 
+import android.content.SharedPreferences
 import by.bashlikovvv.core.domain.model.Location
 import by.bashlikovvv.core.domain.repository.ILocationsRepository
 import by.bashlikovvv.locationsdata.local.dao.LocationsDao
 import by.bashlikovvv.locationsdata.mapper.LocationEntityToLocationMapper
 
 class LocationsRepository(
-    private val locationsDao: LocationsDao
+    private val locationsDao: LocationsDao,
+    private val sharedPreferences: SharedPreferences
 ) : ILocationsRepository {
 
     private val mapper = LocationEntityToLocationMapper()
@@ -38,6 +40,21 @@ class LocationsRepository(
 
             else -> false
         }
+    }
+
+    override suspend fun getSection(): String {
+        return sharedPreferences.getString(KEY_SECTION, "") ?: ""
+    }
+
+    override suspend fun updateSection(newName: String) {
+        with(sharedPreferences.edit()) {
+            putString(KEY_SECTION, newName)
+            apply()
+        }
+    }
+
+    companion object {
+        const val KEY_SECTION = "section_key"
     }
 
 }

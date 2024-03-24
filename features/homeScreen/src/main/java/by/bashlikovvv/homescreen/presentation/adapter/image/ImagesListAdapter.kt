@@ -35,12 +35,19 @@ class ImagesListAdapter(
         payloads: MutableList<Any>
     ) {
         when (val payload = payloads.lastOrNull()) {
-            is ImagePayload.Image -> { holder.bindImageView(payload.uri) }
+            is ImagePayload.Image -> {
+                payload.value.let {
+                    holder.bindImageView(it.imageUri)
+                    holder.bindEdition(it.showSelected)
+                    holder.bindSelection(it.showSelected && it.isSelected)
+                    holder.bindClickListeners(it)
+                }
+            }
             is ImagePayload.Selection -> {
-                payload.value.let { value ->
-                    holder.bindClickListeners(value)
-                    holder.bindEdition(value.showSelected)
-                    holder.bindSelection(value.isSelected && value.showSelected)
+                payload.value.let {
+                    holder.bindEdition(it.showSelected)
+                    holder.bindSelection(it.showSelected && it.isSelected)
+                    holder.bindClickListeners(it)
                 }
             }
             is ImagePayload.Progress -> { holder.bindProgress(payload.value) }

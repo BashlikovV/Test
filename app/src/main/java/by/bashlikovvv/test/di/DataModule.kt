@@ -1,6 +1,8 @@
 package by.bashlikovvv.test.di
 
 import android.app.Application
+import android.content.Context
+import android.content.SharedPreferences
 import androidx.room.Room
 import by.bashlikovvv.core.di.ApplicationQualifier
 import by.bashlikovvv.core.domain.repository.ILocationsRepository
@@ -39,6 +41,21 @@ class DataModule {
     }
 
     @Provides
+    fun provideApplicationSharedPrefs(
+        @ApplicationQualifier application: Application
+    ): SharedPreferences {
+        val prefs = application.getSharedPreferences("APPLICATION_SP", Context.MODE_PRIVATE)
+        if (prefs.all.isEmpty()) {
+            with(prefs.edit()) {
+                putString("section_key", application.getString(by.bashlikovvv.core.R.string.streets))
+                apply()
+            }
+        }
+
+        return prefs
+    }
+
+    @Provides
     fun provideFirebaseStorage(): FirebaseStorage {
         return Firebase.storage("gs://test-5f600.appspot.com")
     }
@@ -52,10 +69,10 @@ class DataModule {
 
     @Provides
     fun provideLocationsRepository(
-        locationsDao: LocationsDao
+        locationsDao: LocationsDao,
+        sharedPreferences: SharedPreferences
     ): ILocationsRepository {
-
-        return LocationsRepository(locationsDao)
+        return LocationsRepository(locationsDao, sharedPreferences)
     }
 
 }

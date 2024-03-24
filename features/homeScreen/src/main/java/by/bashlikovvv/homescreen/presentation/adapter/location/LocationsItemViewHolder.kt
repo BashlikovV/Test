@@ -135,12 +135,6 @@ class LocationsItemViewHolder(
 
         fun onRemoveButtonClicked(location: Int)
 
-        fun onImageSelected(position: Int, image: Int)
-
-        fun onImageUnselected(position: Int, image: Int)
-
-        fun onImageClicked(position: Int, image: String)
-
     }
 
 }

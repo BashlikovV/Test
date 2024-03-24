@@ -14,4 +14,8 @@ interface ILocationsRepository {
 
     suspend fun checkDataChanged(locations: List<Location>): Boolean
 
+    suspend fun getSection(): String
+
+    suspend fun updateSection(newName: String)
+
 }

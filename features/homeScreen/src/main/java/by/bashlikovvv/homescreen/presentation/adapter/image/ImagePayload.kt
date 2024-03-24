@@ -8,6 +8,6 @@ sealed class ImagePayload {
 
     data class Selection(val value: ImageState) : ImagePayload()
 
-    data class Image(val uri: String) : ImagePayload()
+    data class Image(val value: ImageState) : ImagePayload()
 
 }

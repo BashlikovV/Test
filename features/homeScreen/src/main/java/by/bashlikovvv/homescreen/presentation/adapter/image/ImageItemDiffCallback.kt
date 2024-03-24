@@ -15,12 +15,12 @@ class ImageItemDiffCallback : DiffUtil.ItemCallback<ImageState>() {
     override fun getChangePayload(oldItem: ImageState, newItem: ImageState): Any? {
         return when {
             oldItem.imageUri != newItem.imageUri -> {
-                ImagePayload.Image(newItem.imageUri)
+                ImagePayload.Image(newItem)
             }
             oldItem.isInProgress != newItem.isInProgress -> {
                 ImagePayload.Progress(newItem.isInProgress)
             }
-            oldItem.isSelected != newItem.isSelected -> {
+            oldItem.showSelected != newItem.showSelected -> {
                 ImagePayload.Selection(newItem)
             }
             else -> super.getChangePayload(oldItem, newItem)
