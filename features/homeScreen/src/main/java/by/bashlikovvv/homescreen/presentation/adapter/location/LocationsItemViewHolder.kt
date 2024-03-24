@@ -58,7 +58,7 @@ class LocationsItemViewHolder(
         bindProgress(item.isInProgress)
         adapter.submitList(item.images)
         binding.root.bindRoot()
-        bindLocationTextInputEditText( item)
+        bindLocationTextInputEditText(item)
         bindAddLocationImageView(item.idx)
         decorationDrawable?.let {
             decorationHorizontal.setDrawable(it)
@@ -67,7 +67,7 @@ class LocationsItemViewHolder(
         bindImagesRecyclerView(adapter)
         showRemoveButton(item.isRemoveButtonVisible)
         binding.removeButton.setOnClickListener {
-            if (expanded) {
+            if (item.isRemoveButtonVisible) {
                 callbacks.onRemoveButtonClicked(item.idx)
             }
         }
@@ -85,11 +85,6 @@ class LocationsItemViewHolder(
 
     fun showRemoveButton(visibility: Boolean) {
         expanded = when {
-            animating && !visibility -> {
-                binding.root.transitionToStart()
-                expandAnimator.reverse()
-                !expanded
-            }
             expanded && !visibility -> {
                 binding.root.transitionToStart()
                 expandAnimator.reverse()
@@ -135,7 +130,6 @@ class LocationsItemViewHolder(
 
     private fun MotionLayout.bindRoot() {
         elevation = 0f
-        transitionToStart()
     }
 
     private fun ViewGroup.measureWrapContentHeight(): Int {
@@ -150,7 +144,7 @@ class LocationsItemViewHolder(
 
     companion object {
 
-        operator fun invoke(
+        fun from(
             parent: ViewGroup,
             callbacks: LocationsItemViewHolderCallbacks
         ): LocationsItemViewHolder {
