@@ -124,6 +124,8 @@ class HomeScreenViewModel(
                 val uploadedImageUri = uploadImageUseCase.execute(uri)
                 if (uploadedImageUri == null) {
                     processImageNotLoaded()
+                    localChanges.removeImageProgress(currentLocation, imageIds)
+                    updateLocalChangesFlow(true)
                 } else {
                     val image = Image(uploadedImageUri.toString())
 
